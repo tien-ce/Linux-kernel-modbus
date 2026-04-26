@@ -1,0 +1,25 @@
+# Binaries and objects generated from kernel module compilation
+*.o
+*.ko
+*.cmd
+*.mod
+*.mod.c
+*.o.d
+*.order
+*.symvers
+# clangd
+*.cache/
+compile_commands.json
+
+# devtool
+*oe-*
+
+# Vim
+*.c.swp
+*.swp
+# device tree binary
+*.dtbo
+# config
+.config
+.config.old
+.config.cmd
