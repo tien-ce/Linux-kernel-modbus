@@ -129,7 +129,6 @@ void
 eMBRTUStop( void )
 {
 	ENTER_CRITICAL_SECTION(  );
-	timer_remove();
 	pr_info("ModBusRTU: Destroy sucessfully\n");
 	EXIT_CRITICAL_SECTION(  );
 }
