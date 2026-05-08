@@ -81,7 +81,7 @@ static DEVICE_ATTR(interval_time, S_IRUGO | S_IWUSR, interval_show, interval_sto
 static DEVICE_ATTR(timeout, S_IRUGO | S_IWUSR, timeout_show, timeout_store);
 static DEVICE_ATTR(slave_address, S_IRUGO, slave_address_show,NULL);
 /* They vary depending on the type of sensor */
-static DEVICE_ATTR(co_value, S_IRUGO, slave_address_show,NULL);
+static DEVICE_ATTR(co_value, S_IRUGO, co_show,NULL);
 static DEVICE_ATTR(pm2_5_value, S_IRUGO, pm2_5_show,NULL);
 static DEVICE_ATTR(pm1_0_value, S_IRUGO, pm1_0_show,NULL);
 #ifdef CONFIG_PM10

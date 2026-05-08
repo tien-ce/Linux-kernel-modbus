@@ -190,7 +190,7 @@ ssize_t pm10_show(struct device *dev, struct device_attribute *attr, char *buf)
 		return ret_val;
 	}
 	struct modev_private_data *dev_data = dev_get_drvdata(dev->parent);
-	return sysfs_emit(buf, "%d\n", dev_data->buffer[3]);
+	return sysfs_emit(buf, "%d\n", dev_data->buffer[2]);
 }
 
 /* File oprations */
