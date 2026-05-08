@@ -245,6 +245,8 @@ static int modbusplatform_driver_probe(struct platform_device *pdev)
 	dev_data->perm = RD_WR;
 	/* 3. Copy the reference of platform data into private data */
 	dev_data->pdata = pdata;
+	/* num_val must be set before the buffer allocation below */
+	dev_data->num_val = (driver_data == CO_SENSOR) ? CO_REG_VAL : PM_REG_VAL;
 	for (int i = 0; i < dev_data->num_val; i++)
 	{
 		dev_info(dev, "Reg[%d] at 0x%x\n", i, dev_data->pdata->reg_address[i]);
@@ -293,10 +295,8 @@ static int modbusplatform_driver_probe(struct platform_device *pdev)
 	{
 		case CO_SENSOR:
 			sysfs_create_attr(dev, &dev_data->modbusdevice->kobj, &dev_attr_co_value.attr);
-			dev_data->num_val = CO_REG_VAL;
 		break;
 		case PM_SENSOR:
-			dev_data->num_val = PM_REG_VAL;
 			sysfs_create_attr(dev, &dev_data->modbusdevice->kobj, &dev_attr_pm1_0_value.attr);
 			sysfs_create_attr(dev, &dev_data->modbusdevice->kobj, &dev_attr_pm2_5_value.attr);
 #ifdef CONFIG_PM10

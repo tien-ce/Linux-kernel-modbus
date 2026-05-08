@@ -26,6 +26,14 @@
  * ------------------------------------------------------------------------- */
 #define WRITE_INTERVAL	0x01
 #define WRITE_TIMEOUT	0x02
+/* -------------------------------------------------------------------------- */
+/* Global Variables                              */
+/* -------------------------------------------------------------------------- */
+/* Lock for controller, only thread can call to controller in time, 
+ * migth be many threads from user try to call to controller when cache hit 
+ * */
+DEFINE_MUTEX(controller_lock); 
+
 /* -------------------------------------------------------------------------
  Internal help function
  * ------------------------------------------------------------------------- */
@@ -63,35 +71,39 @@ static int modbus_read_value(struct device *dev)
 	ktime_t now = ktime_get();
 	if (!previous_read || ktime_ms_delta(now,previous_read) > modb_data->inval_sampl)
 	{
-		for(int i = 0; i < num_val; i++)
+		/* Try to accquire the lock */
+		mutex_lock(&controller_lock);
+		if(!previous_read || ktime_ms_delta(now,previous_read) > modb_data->inval_sampl)
 		{
-			uint32_t reg_addr = modb_data->pdata->reg_address[i];
-			SendRetType err = ModbusSend(modb_data->pdata->slave_addr, 3, reg_addr,1,1000);
-			switch (err)
+			for(int i = 0; i < num_val; i++)
 			{
-				case ESEND_NOERR:
-					uint16_t rec_len = 0;
-					ModbusReceive((char*)&modb_data->buffer[i],&rec_len);
-					pr_info("Recive %d bytes from modbus slave\n",rec_len);
-					break;
-				case ESEND_RQINVAL:
-					ret_val = -EINVAL;
-					goto out;
-					break;
-				case ESEND_RPINVAL:
-					ret_val = -EPROTO;
-					goto out;
-					break;
-				case ESEND_TIMEOUT:
-					ret_val = -ETIMEDOUT;
-					goto out;
-					break;
+				uint32_t reg_addr = modb_data->pdata->reg_address[i];
+				SendRetType err = ModbusSend(modb_data->pdata->slave_addr, 3, reg_addr,1,1000);
+				switch (err)
+				{
+					case ESEND_NOERR:
+						uint16_t rec_len = 0;
+						ModbusReceive((char*)&modb_data->buffer[i],&rec_len);
+						pr_info("Recive %d bytes from modbus slave\n",rec_len);
+						break;
+					case ESEND_RQINVAL:
+						ret_val = -EINVAL;
+						break;
+					case ESEND_RPINVAL:
+						ret_val = -EPROTO;
+						break;
+					case ESEND_TIMEOUT:
+						ret_val = -ETIMEDOUT;
+						break;
+				}
 			}
 		}
-		modb_data->previous_read = now;
+		if(ret_val == 0)
+		{
+			modb_data->previous_read = now;
+		}
+		mutex_unlock(&controller_lock);
 	}
-    return 0;
-out:
 	return ret_val;
 }
 /* -------------------------------------------------------------------------
@@ -289,7 +301,7 @@ ssize_t modbus_read (struct file *filp, char __user *buff, size_t count, loff_t 
     if ((*f_pos + count ) > max_size)
 	    count = max_size - *f_pos;
     /*Copy to user*/
-    ret_val = copy_to_user(buff,modb_data->buffer + *(f_pos),count);
+    ret_val = copy_to_user(buff, (uint8_t *)modb_data->buffer + *f_pos, count);
     if (ret_val)
 	{
 		ret_val = -EFAULT;
